@@ -5,11 +5,92 @@
     <link rel="stylesheet" type="text/css" href="https://cdn.mxpnl.com/libs/mixpanel-platform/css/reset.css">
     <link rel="stylesheet" type="text/css" href="https://cdn.mxpnl.com/libs/mixpanel-platform/build/mixpanel-platform.v0.latest.min.css">
     <script src="https://cdn.mxpnl.com/libs/mixpanel-platform/build/mixpanel-platform.v0.latest.min.js"></script>
+    <style>
+      b { 
+        font-weight: bold;
+      }
+      
+      b .num{ 
+        font-size: 10px;
+        font-color: red;
+      }
+      
+      #data {
+        margin: 10px auto;
+        padding: 10px;
+        width: 80%;
+      }
+      
+      #label {
+        font-size: 20px;
+        padding: 10px;
+      }
+      
+      #number {
+        margin-left: 50px;
+      }
+      
+    </style>
   </head>
   <body class="mixpanel-platform-body">
-    <h1>Hello, World!</h1>
+    <div class="mixpanel-platform-section">
+      <div id="eventSelect" style="float: left;"></div>
+      <div id="by" class="mixpanel-platform-label" style="margin-left: 10px; display: none;">by</div>
+      <div id="propSelect" style="float: left;"></div>
+      <div id="dateSelect" style="float: right;"></div>
+      <div style="clear: both;"></div>
+      <div id="data">
+        <div id="number"></div>
+        <div id="label"></div>
+      </div>
+    </div>
+
     <script>
-      // Run queries and display results here
+      var eventSelect = $('#eventSelect').MPEventSelect();
+      var propSelect  = $('#propSelect').MPPropertySelect();
+      var dateSelect  = $('#dateSelect').MPDatepicker();
+      
+      
+
+      var runQuery = function() {
+        var eventName = eventSelect.MPEventSelect('value'),
+            propName  = propSelect.MPPropertySelect('value'),
+            dateRange = dateSelect.MPDatepicker('value');
+            
+        unit = 'month'    
+                where = 'defined (properties["'+propName+'"])'
+        
+            segData = MP.api.segment(eventName, propName, {
+              from: dateRange.from,
+              to:dateRange.to,
+              unit: unit, 
+              limit:1000, 
+              where: where
+            });
+            
+
+        if (eventName && propName) {
+          
+          $.when(segData).done(function(segData) {
+            
+            label = document.getElementById("label")
+            number = Object.keys(segData.values()).length
+            
+            label.innerHTML = "<b class='num'>"+number+"</b> <b>"+propName+"</b> property value(s) from the <b>"+eventName+"</b> event"
+            
+          });
+          
+        }
+      };
+      
+      
+      eventSelect.on('change', function(e, eventName) {
+        propSelect.MPPropertySelect('setEvent', eventName);
+        $("#by").show();
+        runQuery();
+      });
+      propSelect.on('change', runQuery);
+      dateSelect.on('change', runQuery);
     </script>
   </body>
 </html>
